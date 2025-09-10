@@ -1,0 +1,314 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '18'
+  RUST_VERSION: '1.70.0'
+  SOLANA_VERSION: '1.18.22'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+  test-sdk:
+    name: Test SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run SDK tests
+        run: pnpm test:integration
+        working-directory: ./tests
+
+  test-program:
+    name: Test Anchor Program
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          profile: minimal
+          override: true
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            programs/splitsquads/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install latest
+          avm use latest
+
+      - name: Setup Solana config
+        run: |
+          solana config set --url localhost
+          solana-keygen new --no-bip39-passphrase
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local validator
+        run: |
+          solana-test-validator --reset --quiet &
+          sleep 10
+
+      - name: Run program tests
+        run: pnpm test:program
+        working-directory: ./tests
+
+  test-e2e:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Build application
+        run: pnpm build
+        working-directory: ./app
+
+      - name: Start application
+        run: |
+          pnpm start &
+          sleep 10
+        working-directory: ./app
+        env:
+          NODE_ENV: test
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        working-directory: ./tests
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 30
+
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test-sdk, test-program, test-e2e]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SDK
+        run: pnpm build
+        working-directory: ./packages/sdk
+
+      - name: Build application
+        run: pnpm build
+        working-directory: ./app
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_RPC_ENDPOINT: ${{ secrets.NEXT_PUBLIC_RPC_ENDPOINT }}
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./app
+          vercel-args: '--prod'
+
+  deploy-program:
+    name: Deploy Anchor Program
+    runs-on: ubuntu-latest
+    needs: [test-program]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          profile: minimal
+          override: true
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install latest
+          avm use latest
+
+      - name: Setup Solana config for mainnet
+        run: |
+          echo "${{ secrets.SOLANA_KEYPAIR }}" > keypair.json
+          solana config set --url mainnet-beta --keypair keypair.json
+
+      - name: Build program
+        run: anchor build
+        working-directory: ./programs/splitsquads
+
+      - name: Deploy program
+        run: anchor deploy --provider.cluster mainnet
+        working-directory: ./programs/splitsquads
+        env:
+          ANCHOR_PROVIDER_URL: https://api.mainnet-beta.solana.com
+
+      - name: Generate IDL
+        run: anchor idl init --filepath target/idl/splitsquads.json ${{ secrets.PROGRAM_ID }}
+        working-directory: ./programs/splitsquads
+
+  publish-sdk:
+    name: Publish SDK
+    runs-on: ubuntu-latest
+    needs: [test-sdk, deploy-program]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SDK
+        run: pnpm build
+        working-directory: ./packages/sdk
+
+      - name: Publish to NPM
+        run: pnpm publish --access public
+        working-directory: ./packages/sdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [build-and-deploy, deploy-program, publish-sdk]
+    if: always() && github.ref == 'refs/heads/main'
+    steps:
+      - name: Notify Discord
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: |
+            🚀 SplitSquads deployment completed!
+            
+            **Status:** ${{ needs.build-and-deploy.result == 'success' && needs.deploy-program.result == 'success' && needs.publish-sdk.result == 'success' && '✅ Success' || '❌ Failed' }}
+            **Frontend:** ${{ needs.build-and-deploy.result == 'success' && '✅ Deployed' || '❌ Failed' }}
+            **Program:** ${{ needs.deploy-program.result == 'success' && '✅ Deployed' || '❌ Failed' }}
+            **SDK:** ${{ needs.publish-sdk.result == 'success' && '✅ Published' || '❌ Failed' }}
+            
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}

@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "name": "splitsquads",
+  "builds": [
+    {
+      "src": "app/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "projectSettings": {
+          "framework": "nextjs"
+        }
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_RPC_ENDPOINT": "https://api.devnet.solana.com",
+    "NEXT_PUBLIC_PROGRAM_ID": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+  },
+  "functions": {
+    "app/src/app/api/**": {
+      "maxDuration": 30
+    }
+  }
+}
