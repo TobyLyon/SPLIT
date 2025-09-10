@@ -6,7 +6,7 @@ export interface SquadData {
   maxMembers: number;
   memberCount: number;
   totalStaked: BN;
-  rewardsVault: PublicKey;
+  squadVault: PublicKey;
   bump: number;
 }
 

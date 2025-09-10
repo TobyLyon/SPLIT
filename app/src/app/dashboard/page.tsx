@@ -9,50 +9,35 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { formatNumber, formatTokenAmount, shortenAddress } from '@/lib/utils';
+import { formatNumber, formatTokenAmount, shortenAddress, calculateTimeAgo } from '@/lib/utils';
+import { useSquadsByAuthority, useSquadMembers } from '@/hooks/useBlockchain';
+import { useWalletBalance } from '@/hooks/useWalletBalance';
 
-// Mock data for demo
-const userStats = {
-  totalStaked: 5000,
-  totalRewards: 1250,
-  activeSquads: 2,
-  rank: 47,
-};
-
-const userSquads = [
-  {
-    id: '1',
-    name: 'DeFi Builders',
-    memberCount: 5,
-    maxMembers: 6,
-    totalStaked: 25000,
-    userStake: 5000,
-    rank: 12,
-    recentRewards: 125,
-  },
-  {
-    id: '2',
-    name: 'Solana Stakers',
-    memberCount: 3,
-    maxMembers: 8,
-    totalStaked: 18000,
-    userStake: 6000,
-    rank: 28,
-    recentRewards: 89,
-  },
-];
-
-const recentActivity = [
-  { type: 'reward', amount: 45, squad: 'DeFi Builders', time: '2 hours ago' },
-  { type: 'stake', amount: 1000, squad: 'Solana Stakers', time: '1 day ago' },
-  { type: 'join', squad: 'DeFi Builders', time: '3 days ago' },
-  { type: 'reward', amount: 78, squad: 'Solana Stakers', time: '5 days ago' },
-];
+// Real user stats calculation
+function useUserStats(publicKey: any) {
+  const { data: userSquads = [] } = useSquadsByAuthority(publicKey);
+  const { data: balance } = useWalletBalance();
+  
+  const totalStaked = userSquads.reduce((sum, squad) => {
+    // This would need to be calculated from member data
+    return sum + 0; // TODO: Get actual user stake from member accounts
+  }, 0);
+  
+  return {
+    totalStaked,
+    totalRewards: 0, // TODO: Calculate from transaction history
+    activeSquads: userSquads.length,
+    rank: 0, // TODO: Calculate from leaderboard position
+    squads: userSquads,
+  };
+}
 
 export default function DashboardPage() {
   const { connected, publicKey } = useWallet();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const userStats = useUserStats(publicKey);
+  const { data: balance } = useWalletBalance();
 
   useEffect(() => {
     setMounted(true);
@@ -111,7 +96,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gradient-mint">
-              {formatNumber(userStats.totalStaked)} $SPLIT
+              {balance ? formatNumber(balance.split) : '0'} $SPLIT
             </div>
           </CardContent>
         </Card>

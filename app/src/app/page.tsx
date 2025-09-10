@@ -9,14 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatNumber } from '@/lib/utils';
+import { useAllSquads } from '@/hooks/useBlockchain';
 
-// Mock data for demo
-const stats = {
-  totalStaked: 1250000,
-  activeSquads: 342,
-  totalMembers: 1847,
-  rewardsDistributed: 89500,
-};
+// Real-time stats calculation
+function useGlobalStats() {
+  const { data: squads = [] } = useAllSquads();
+  
+  const stats = {
+    totalStaked: squads.reduce((sum, squad) => sum + Number(squad.data.totalStaked), 0) / 1_000_000,
+    activeSquads: squads.length,
+    totalMembers: squads.reduce((sum, squad) => sum + squad.data.memberCount, 0),
+    rewardsDistributed: 0, // This would come from a separate query tracking distributed rewards
+  };
+  
+  return stats;
+}
 
 const features = [
   {
@@ -70,6 +77,7 @@ export default function HomePage() {
   const { connected } = useWallet();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const stats = useGlobalStats();
 
   useEffect(() => {
     setMounted(true);

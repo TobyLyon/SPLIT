@@ -7,100 +7,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatNumber, shortenAddress } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 
-// Mock leaderboard data
-const mockLeaderboard = {
-  squads: [
-    {
-      rank: 1,
-      name: 'DeFi Legends',
-      pubkey: 'ABC123...',
-      totalStaked: 150000,
-      memberCount: 8,
-      recentRewards: 2500,
+// Real leaderboard data hook
+function useLeaderboard(type: 'squad' | 'member' | 'all' = 'all') {
+  return useQuery({
+    queryKey: ['leaderboard', type],
+    queryFn: async () => {
+      const response = await fetch(`/api/leaderboard?type=${type}&limit=50`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard');
+      }
+      const data = await response.json();
+      return data.entries || [];
     },
-    {
-      rank: 2,
-      name: 'Solana Builders',
-      pubkey: 'DEF456...',
-      totalStaked: 125000,
-      memberCount: 6,
-      recentRewards: 2100,
-    },
-    {
-      rank: 3,
-      name: 'Crypto Innovators',
-      pubkey: 'GHI789...',
-      totalStaked: 98000,
-      memberCount: 7,
-      recentRewards: 1800,
-    },
-    {
-      rank: 4,
-      name: 'Web3 Warriors',
-      pubkey: 'JKL012...',
-      totalStaked: 87000,
-      memberCount: 5,
-      recentRewards: 1650,
-    },
-    {
-      rank: 5,
-      name: 'Blockchain Bros',
-      pubkey: 'MNO345...',
-      totalStaked: 76000,
-      memberCount: 4,
-      recentRewards: 1400,
-    },
-  ],
-  members: [
-    {
-      rank: 1,
-      name: 'CryptoWhale',
-      pubkey: 'ABC123...',
-      totalStaked: 45000,
-      twitterHandle: '@cryptowhale',
-      recentRewards: 850,
-    },
-    {
-      rank: 2,
-      name: 'DefiMaster',
-      pubkey: 'DEF456...',
-      totalStaked: 38000,
-      twitterHandle: '@defimaster',
-      recentRewards: 720,
-    },
-    {
-      rank: 3,
-      name: 'SolanaBuilder',
-      pubkey: 'GHI789...',
-      totalStaked: 32000,
-      twitterHandle: '@solanabuilder',
-      recentRewards: 650,
-    },
-    {
-      rank: 4,
-      name: 'TokenStaker',
-      pubkey: 'JKL012...',
-      totalStaked: 28000,
-      twitterHandle: '@tokenstaker',
-      recentRewards: 580,
-    },
-    {
-      rank: 5,
-      name: 'YieldFarmer',
-      pubkey: 'MNO345...',
-      totalStaked: 25000,
-      twitterHandle: '@yieldfarmer',
-      recentRewards: 520,
-    },
-  ],
-};
+    refetchInterval: 60000, // Refetch every minute
+    staleTime: 30000, // Consider stale after 30 seconds
+  });
+}
 
 type LeaderboardType = 'squads' | 'members';
 
 export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<LeaderboardType>('squads');
   const [mounted, setMounted] = useState(false);
+  
+  // Real data hooks
+  const { data: leaderboardData = [], isLoading } = useLeaderboard(activeTab === 'squads' ? 'squad' : 'member');
 
   useEffect(() => {
     setMounted(true);
@@ -214,70 +147,95 @@ export default function LeaderboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {mockLeaderboard[activeTab].map((entry, index) => (
-              <motion.div
-                key={entry.pubkey}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card 
-                  variant="glass" 
-                  className={`p-6 hover:scale-[1.01] transition-all duration-300 ${
-                    entry.rank <= 3 ? 'border-brand-mint/30' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {/* Rank */}
-                      <div className="flex items-center justify-center w-12 h-12 rounded-lg glass">
-                        {getRankIcon(entry.rank)}
-                      </div>
-
-                      {/* Info */}
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-semibold text-lg">{entry.name}</h3>
-                          {entry.rank <= 3 && (
-                            <Badge variant={getRankBadgeVariant(entry.rank)}>
-                              {entry.rank === 1 ? '👑 Champion' : 
-                               entry.rank === 2 ? '🥈 Runner-up' : 
-                               '🥉 Third Place'}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span>{shortenAddress(entry.pubkey)}</span>
-                          {activeTab === 'squads' && (
-                            <span>{entry.memberCount} members</span>
-                          )}
-                          {activeTab === 'members' && 'twitterHandle' in entry && entry.twitterHandle && (
-                            <a 
-                              href={`https://twitter.com/${entry.twitterHandle.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-brand-mint hover:underline"
-                            >
-                              {entry.twitterHandle}
-                            </a>
-                          )}
-                        </div>
-                      </div>
+            {isLoading ? (
+              // Loading skeleton
+              [...Array(10)].map((_, i) => (
+                <Card key={i} variant="glass" className="p-6 animate-pulse">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
+                    <div className="flex-1">
+                      <div className="h-5 bg-white/10 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded w-1/3"></div>
                     </div>
-
-                    {/* Stats */}
                     <div className="text-right">
-                      <div className="text-xl font-bold text-gradient-mint">
-                        {formatNumber(entry.totalStaked)} $SPLIT
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        +{formatNumber(entry.recentRewards)} rewards
-                      </div>
+                      <div className="h-6 bg-white/10 rounded w-20 mb-1"></div>
+                      <div className="h-4 bg-white/10 rounded w-16"></div>
                     </div>
                   </div>
                 </Card>
-              </motion.div>
-            ))}
+              ))
+            ) : leaderboardData.length > 0 ? (
+              leaderboardData.map((entry: any, index: number) => (
+                <motion.div
+                  key={entry.pubkey}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card 
+                    variant="glass" 
+                    className={`p-6 hover:scale-[1.01] transition-all duration-300 ${
+                      entry.rank <= 3 ? 'border-brand-mint/30' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {/* Rank */}
+                        <div className="flex items-center justify-center w-12 h-12 rounded-lg glass">
+                          {getRankIcon(entry.rank)}
+                        </div>
+
+                        {/* Info */}
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="font-semibold text-lg">{entry.name}</h3>
+                            {entry.rank <= 3 && (
+                              <Badge variant={getRankBadgeVariant(entry.rank)}>
+                                {entry.rank === 1 ? '👑 Champion' : 
+                                 entry.rank === 2 ? '🥈 Runner-up' : 
+                                 '🥉 Third Place'}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <span>{shortenAddress(entry.pubkey)}</span>
+                            {activeTab === 'squads' && entry.member_count && (
+                              <span>{entry.member_count} members</span>
+                            )}
+                            {activeTab === 'members' && entry.twitter_handle && (
+                              <a 
+                                href={`https://twitter.com/${entry.twitter_handle.replace('@', '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-brand-mint hover:underline"
+                              >
+                                {entry.twitter_handle}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-gradient-mint">
+                          {formatNumber(entry.total_staked / 1_000_000)} $SPLIT
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Rank #{entry.rank}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No {activeTab} found</p>
+                <p className="text-sm">Be the first to create a squad and start staking!</p>
+              </div>
+            )}
 
             {/* Load More Button */}
             <div className="text-center pt-4">

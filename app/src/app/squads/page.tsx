@@ -10,70 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { formatNumber, shortenAddress } from '@/lib/utils';
-
-// Mock data for squad discovery
-const featuredSquads = [
-  {
-    id: '1',
-    name: 'DeFi Legends',
-    description: 'Elite DeFi strategists focused on yield optimization and risk management.',
-    memberCount: 8,
-    maxMembers: 8,
-    totalStaked: 150000,
-    rank: 1,
-    recentRewards: 2500,
-    tags: ['DeFi', 'Yield Farming', 'Expert'],
-    isPublic: true,
-  },
-  {
-    id: '2',
-    name: 'Solana Builders',
-    description: 'Developers and builders creating the future of Solana ecosystem.',
-    memberCount: 6,
-    maxMembers: 8,
-    totalStaked: 125000,
-    rank: 2,
-    recentRewards: 2100,
-    tags: ['Development', 'Solana', 'Building'],
-    isPublic: true,
-  },
-  {
-    id: '3',
-    name: 'Crypto Innovators',
-    description: 'Forward-thinking investors exploring emerging crypto opportunities.',
-    memberCount: 7,
-    maxMembers: 8,
-    totalStaked: 98000,
-    rank: 3,
-    recentRewards: 1800,
-    tags: ['Innovation', 'Investment', 'Research'],
-    isPublic: true,
-  },
-  {
-    id: '4',
-    name: 'NFT Collectors',
-    description: 'Art enthusiasts and NFT collectors with a passion for digital creativity.',
-    memberCount: 4,
-    maxMembers: 6,
-    totalStaked: 76000,
-    rank: 8,
-    recentRewards: 1200,
-    tags: ['NFT', 'Art', 'Collecting'],
-    isPublic: true,
-  },
-  {
-    id: '5',
-    name: 'GameFi Squad',
-    description: 'Gaming enthusiasts exploring play-to-earn and blockchain gaming.',
-    memberCount: 5,
-    maxMembers: 8,
-    totalStaked: 65000,
-    rank: 12,
-    recentRewards: 980,
-    tags: ['Gaming', 'P2E', 'Fun'],
-    isPublic: true,
-  },
-];
+import { useAllSquads, useJoinSquad } from '@/hooks/useBlockchain';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function SquadsPage() {
   const { connected } = useWallet();
@@ -81,6 +19,11 @@ export default function SquadsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [mounted, setMounted] = useState(false);
+  
+  // Real data hooks
+  const { data: allSquads = [], isLoading } = useAllSquads();
+  const joinSquadMutation = useJoinSquad();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     setMounted(true);
@@ -90,25 +33,32 @@ export default function SquadsPage() {
     return null;
   }
 
-  const filteredSquads = featuredSquads.filter(squad => {
-    const matchesSearch = squad.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         squad.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         squad.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSquads = allSquads.filter(squad => {
+    const matchesSearch = squad.data.name.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesFilter = selectedFilter === 'all' || 
-                         (selectedFilter === 'open' && squad.memberCount < squad.maxMembers) ||
-                         (selectedFilter === 'full' && squad.memberCount === squad.maxMembers);
+                         (selectedFilter === 'open' && squad.data.memberCount < squad.data.maxMembers) ||
+                         (selectedFilter === 'full' && squad.data.memberCount === squad.data.maxMembers);
     
     return matchesSearch && matchesFilter;
   });
 
-  const handleJoinSquad = (squadId: string) => {
+  const handleJoinSquad = async (squadPubkey: string) => {
     if (!connected) {
-      // Trigger wallet connection
+      addNotification({
+        type: 'warning',
+        title: 'Wallet Required',
+        message: 'Please connect your wallet to join a squad.',
+      });
       return;
     }
-    // Implement join squad logic
-    console.log('Joining squad:', squadId);
+    
+    try {
+      await joinSquadMutation.mutateAsync(squadPubkey);
+      router.push(`/squad/${squadPubkey}`);
+    } catch (error) {
+      // Error handling is done in the mutation
+    }
   };
 
   return (
@@ -180,94 +130,131 @@ export default function SquadsPage() {
         transition={{ delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        {filteredSquads.map((squad, index) => (
-          <motion.div
-            key={squad.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + index * 0.1 }}
-          >
-            <Card variant="glass" className="h-full hover:scale-[1.02] transition-transform duration-300">
+        {isLoading ? (
+          // Loading skeleton
+          [...Array(6)].map((_, i) => (
+            <Card key={i} variant="glass" className="h-full animate-pulse">
               <CardHeader>
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <CardTitle className="text-xl mb-1">{squad.name}</CardTitle>
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{squad.memberCount}/{squad.maxMembers} members</span>
-                      <Badge variant="glass" className="text-xs">
-                        Rank #{squad.rank}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Badge variant={squad.memberCount < squad.maxMembers ? 'mint' : 'glass'}>
-                    {squad.memberCount < squad.maxMembers ? 'Open' : 'Full'}
-                  </Badge>
-                </div>
-                <CardDescription className="text-sm leading-relaxed">
-                  {squad.description}
-                </CardDescription>
+                <div className="h-6 bg-white/10 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-white/10 rounded w-1/2 mb-4"></div>
+                <div className="h-16 bg-white/10 rounded"></div>
               </CardHeader>
-              
               <CardContent className="space-y-4">
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {squad.tags.map((tag) => (
-                    <Badge key={tag} variant="glass" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* Stats */}
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span>Total Staked</span>
-                    <span className="font-mono text-brand-mint">
-                      {formatNumber(squad.totalStaked)} $SPLIT
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Squad Capacity</span>
-                      <span>{((squad.memberCount / squad.maxMembers) * 100).toFixed(0)}%</span>
-                    </div>
-                    <Progress 
-                      value={(squad.memberCount / squad.maxMembers) * 100} 
-                      variant="gradient"
-                      className="h-2"
-                    />
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span>Recent Rewards</span>
-                    <span className="font-mono text-brand-violet">
-                      +{formatNumber(squad.recentRewards)} $SPLIT
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="pt-2">
-                  {squad.memberCount < squad.maxMembers ? (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleJoinSquad(squad.id)}
-                      disabled={!connected}
-                    >
-                      {connected ? 'Join Squad' : 'Connect Wallet to Join'}
-                    </Button>
-                  ) : (
-                    <Button variant="glass" className="w-full" disabled>
-                      Squad Full
-                    </Button>
-                  )}
-                </div>
+                <div className="h-20 bg-white/10 rounded"></div>
+                <div className="h-10 bg-white/10 rounded"></div>
               </CardContent>
             </Card>
-          </motion.div>
-        ))}
+          ))
+        ) : filteredSquads.length > 0 ? (
+          filteredSquads.map((squad, index) => (
+            <motion.div
+              key={squad.pubkey.toString()}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + index * 0.1 }}
+            >
+              <Card variant="glass" className="h-full hover:scale-[1.02] transition-transform duration-300">
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <CardTitle className="text-xl mb-1">{squad.data.name}</CardTitle>
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        <span>{squad.data.memberCount}/{squad.data.maxMembers} members</span>
+                      </div>
+                    </div>
+                    <Badge variant={squad.data.memberCount < squad.data.maxMembers ? 'mint' : 'glass'}>
+                      {squad.data.memberCount < squad.data.maxMembers ? 'Open' : 'Full'}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Squad ID: {shortenAddress(squad.pubkey.toString())}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  {/* Stats */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Total Staked</span>
+                      <span className="font-mono text-brand-mint">
+                        {formatNumber(Number(squad.data.totalStaked) / 1_000_000)} $SPLIT
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Squad Capacity</span>
+                        <span>{((squad.data.memberCount / squad.data.maxMembers) * 100).toFixed(0)}%</span>
+                      </div>
+                      <Progress 
+                        value={(squad.data.memberCount / squad.data.maxMembers) * 100} 
+                        variant="gradient"
+                        className="h-2"
+                      />
+                    </div>
+
+                    <div className="flex justify-between text-sm">
+                      <span>Authority</span>
+                      <span className="font-mono text-brand-violet">
+                        {shortenAddress(squad.data.authority.toString())}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-2 space-y-2">
+                    <Button
+                      variant="glass"
+                      className="w-full"
+                      onClick={() => router.push(`/squad/${squad.pubkey.toString()}`)}
+                    >
+                      View Details
+                    </Button>
+                    
+                    {squad.data.memberCount < squad.data.maxMembers ? (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleJoinSquad(squad.pubkey.toString())}
+                        disabled={!connected}
+                        loading={joinSquadMutation.isPending}
+                      >
+                        {connected ? 'Join Squad' : 'Connect Wallet to Join'}
+                      </Button>
+                    ) : (
+                      <Button variant="glass" className="w-full" disabled>
+                        Squad Full
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))
+        ) : (
+          // Empty state
+          <div className="col-span-full">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <Card variant="glass" className="p-8 max-w-md mx-auto">
+                <div className="text-4xl mb-4">🔍</div>
+                <h3 className="text-lg font-semibold mb-2">No squads found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {allSquads.length === 0 
+                    ? "No squads have been created yet. Be the first to start one!"
+                    : "Try adjusting your search criteria or create a new squad."
+                  }
+                </p>
+                <Button onClick={() => router.push('/squads/create')}>
+                  Create New Squad
+                </Button>
+              </Card>
+            </motion.div>
+          </div>
+        )}
       </motion.div>
 
       {/* Empty State */}

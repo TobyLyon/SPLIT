@@ -68,13 +68,13 @@ export class SplitSquadsClient {
   ): Promise<string> {
     const authority = this.provider.wallet.publicKey!;
     const [squad] = this.getSquadPDA(authority, name);
-    const [rewardsVault] = this.getRewardsVaultPDA(squad);
+    const [squadVault] = this.getSquadVaultPDA(squad);
 
     const tx = await this.program.methods
       .initializeSquad(name, maxMembers)
       .accounts({
         squad,
-        rewardsVault,
+        squadVault,
         mint,
         authority,
         tokenProgram: TOKEN_PROGRAM_ID,

@@ -8,29 +8,26 @@ import { ArrowLeft, Users, Image, Hash, FileText, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useCreateSquad } from '@/hooks/useBlockchain';
+import { useNotifications } from '@/hooks/useNotifications';
+import { UI_CONFIG } from '@/config/constants';
 
 export default function CreateSquadPage() {
   const { connected, publicKey } = useWallet();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  
+  // Blockchain hooks
+  const createSquadMutation = useCreateSquad();
+  const { addNotification } = useNotifications();
   
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    maxMembers: 4,
-    isPublic: true,
-    tags: [] as string[],
-    bannerUrl: '',
+    maxMembers: UI_CONFIG.defaultSquadSize,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [availableTags] = useState([
-    'DeFi', 'NFT', 'Gaming', 'Development', 'Investment', 
-    'Yield Farming', 'Art', 'Music', 'Sports', 'Education',
-    'Research', 'Trading', 'Building', 'Community'
-  ]);
 
   useEffect(() => {
     setMounted(true);
@@ -55,18 +52,12 @@ export default function CreateSquadPage() {
 
     if (!formData.name.trim()) {
       newErrors.name = 'Squad name is required';
-    } else if (formData.name.length > 32) {
-      newErrors.name = 'Squad name must be 32 characters or less';
+    } else if (formData.name.length > UI_CONFIG.maxSquadNameLength) {
+      newErrors.name = `Squad name must be ${UI_CONFIG.maxSquadNameLength} characters or less`;
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    } else if (formData.description.length > 200) {
-      newErrors.description = 'Description must be 200 characters or less';
-    }
-
-    if (formData.maxMembers < 2 || formData.maxMembers > 8) {
-      newErrors.maxMembers = 'Squad size must be between 2 and 8 members';
+    if (formData.maxMembers < UI_CONFIG.minSquadSize || formData.maxMembers > UI_CONFIG.maxSquadSize) {
+      newErrors.maxMembers = `Squad size must be between ${UI_CONFIG.minSquadSize} and ${UI_CONFIG.maxSquadSize} members`;
     }
 
     setErrors(newErrors);
@@ -80,33 +71,29 @@ export default function CreateSquadPage() {
       return;
     }
 
-    setIsCreating(true);
+    if (!connected || !publicKey) {
+      addNotification({
+        type: 'error',
+        title: 'Wallet Required',
+        message: 'Please connect your wallet to create a squad.',
+      });
+      return;
+    }
     
     try {
-      // Here you would integrate with the SplitSquads SDK
-      // const client = new SplitSquadsClient(connection, wallet);
-      // await client.initializeSquad(formData.name, formData.maxMembers, mintAddress);
+      await createSquadMutation.mutateAsync({
+        name: formData.name.trim(),
+        maxMembers: formData.maxMembers,
+      });
       
-      // For demo purposes, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Redirect to the new squad page
+      // Redirect to dashboard on success
       router.push('/dashboard');
     } catch (error) {
+      // Error handling is done in the mutation
       console.error('Failed to create squad:', error);
-    } finally {
-      setIsCreating(false);
     }
   };
 
-  const handleTagToggle = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag].slice(0, 5) // Max 5 tags
-    }));
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -166,31 +153,11 @@ export default function CreateSquadPage() {
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:border-brand-mint/50 text-foreground placeholder-muted-foreground"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  maxLength={32}
+                  maxLength={UI_CONFIG.maxSquadNameLength}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{errors.name && <span className="text-red-400">{errors.name}</span>}</span>
-                  <span>{formData.name.length}/32</span>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center space-x-2">
-                  <FileText className="h-4 w-4 text-brand-violet" />
-                  <span>Description</span>
-                </label>
-                <textarea
-                  placeholder="Describe your squad's mission and goals"
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:border-brand-mint/50 text-foreground placeholder-muted-foreground resize-none"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  maxLength={200}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{errors.description && <span className="text-red-400">{errors.description}</span>}</span>
-                  <span>{formData.description.length}/200</span>
+                  <span>{formData.name.length}/{UI_CONFIG.maxSquadNameLength}</span>
                 </div>
               </div>
 
@@ -282,10 +249,10 @@ export default function CreateSquadPage() {
                   type="submit"
                   size="lg"
                   className="w-full"
-                  disabled={isCreating}
-                  loading={isCreating}
+                  disabled={createSquadMutation.isPending || !connected}
+                  loading={createSquadMutation.isPending}
                 >
-                  {isCreating ? 'Creating Squad...' : 'Create Squad'}
+                  {createSquadMutation.isPending ? 'Creating Squad...' : 'Create Squad'}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center mt-2">
                   Creating a squad requires a small transaction fee (~0.01 SOL)

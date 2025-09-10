@@ -21,7 +21,7 @@ pub mod splitsquads {
         squad.max_members = max_members;
         squad.member_count = 0;
         squad.total_staked = 0;
-        squad.rewards_vault = ctx.accounts.rewards_vault.key();
+        squad.squad_vault = ctx.accounts.squad_vault.key();
         squad.bump = ctx.bumps.squad;
 
         Ok(())
@@ -256,10 +256,10 @@ pub struct InitializeSquad<'info> {
         payer = authority,
         token::mint = mint,
         token::authority = squad,
-        seeds = [b"rewards_vault", squad.key().as_ref()],
+        seeds = [b"squad_vault", squad.key().as_ref()],
         bump
     )]
-    pub rewards_vault: Account<'info, TokenAccount>,
+    pub squad_vault: Account<'info, TokenAccount>,
     
     pub mint: Account<'info, Mint>,
     
@@ -403,7 +403,7 @@ pub struct Squad {
     pub max_members: u8,
     pub member_count: u8,
     pub total_staked: u64,
-    pub rewards_vault: Pubkey,
+    pub squad_vault: Pubkey,
     pub bump: u8,
 }
 
