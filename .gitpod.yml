@@ -1,0 +1,54 @@
+tasks:
+  - name: Setup SplitSquads Environment
+    init: |
+      # Install global dependencies
+      npm install -g pnpm
+      
+      # Install project dependencies
+      pnpm install
+      
+      # Build SDK
+      cd packages/sdk
+      pnpm build
+      cd ../..
+      
+      # Setup environment
+      cp app/.env.example app/.env.local
+      
+      echo "🚀 SplitSquads environment ready!"
+      echo "📱 Your app will be available at the preview URL"
+      
+  - name: Start Development Server
+    command: |
+      cd app
+      pnpm dev
+
+ports:
+  - port: 3000
+    onOpen: open-preview
+    visibility: public
+    name: SplitSquads App
+    description: Main Next.js application
+
+  - port: 8899
+    onOpen: ignore
+    visibility: private
+    name: Solana Test Validator
+    description: Local Solana validator for testing
+
+vscode:
+  extensions:
+    - bradlc.vscode-tailwindcss
+    - ms-vscode.vscode-typescript-next
+    - esbenp.prettier-vscode
+    - ms-vscode.vscode-json
+
+github:
+  prebuilds:
+    master: true
+    branches: true
+    pullRequests: true
+    pullRequestsFromForks: true
+    addCheck: true
+    addComment: false
+    addBadge: false
