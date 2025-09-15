@@ -290,7 +290,7 @@ export default function SquadDetailsPage() {
           <Card variant="glass-strong">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-brand-mint" />
+                <Users className="h-5 w-5 text-brand" />
                 <span>Squad Members</span>
               </CardTitle>
               <CardDescription>
@@ -315,8 +315,8 @@ export default function SquadDetailsPage() {
                   <Card key={member.pubkey.toString()} variant="glass" className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-brand-mint to-brand-violet flex items-center justify-center">
-                          <span className="text-brand-dark font-bold text-sm">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-brand to-accent flex items-center justify-center">
+                          <span className="text-bg font-bold text-sm">
                             {shortenAddress(member.data.authority.toString()).slice(0, 2)}
                           </span>
                         </div>
@@ -331,7 +331,7 @@ export default function SquadDetailsPage() {
                       </div>
                       
                       <div className="text-right">
-                        <p className="font-mono text-brand-mint">
+                        <p className="font-mono text-brand">
                           {formatNumber(Number(member.data.stakeAmount) / 1_000_000)} $SPLIT
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -368,7 +368,7 @@ export default function SquadDetailsPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Staked Amount</span>
-                    <span className="font-mono text-brand-mint">
+                    <span className="font-mono text-brand">
                       {formatNumber(userStakeAmount)} $SPLIT
                     </span>
                   </div>
@@ -434,7 +434,7 @@ export default function SquadDetailsPage() {
               
               <div className="flex justify-between text-sm">
                 <span>Squad Authority</span>
-                <span className="font-mono text-brand-mint">
+                <span className="font-mono text-brand">
                   {shortenAddress(squad.data.authority.toString())}
                 </span>
               </div>

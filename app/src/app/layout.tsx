@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import { WalletProvider } from '@/components/providers/wallet-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Header } from '@/components/layout/header';
@@ -7,43 +7,53 @@ import { Footer } from '@/components/layout/footer';
 import { NotificationContainer } from '@/components/ui/notifications';
 import '@/styles/globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'SplitSquads - Rewards-Sharing Social Staking on Solana',
-  description: 'Join squads, stake $SPLIT tokens, and earn rewards based on your contribution and activity. Built on Solana.',
-  keywords: ['solana', 'defi', 'staking', 'rewards', 'social', 'crypto'],
-  authors: [{ name: 'SplitSquads Team' }],
-  creator: 'SplitSquads',
-  publisher: 'SplitSquads',
+  title: 'SPLIT - SocialFi Staking Game',
+  description: 'The ultimate SocialFi staking game. Choose Split or Steal daily, build streaks, and compete with your squad on Solana.',
+  keywords: ['solana', 'defi', 'staking', 'socialfi', 'game', 'split', 'steal', 'crypto'],
+  authors: [{ name: 'SPLIT Team' }],
+  creator: 'SPLIT',
+  publisher: 'SPLIT',
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://splitsquads.com'),
+  metadataBase: new URL('https://split.game'),
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://splitsquads.com',
-    siteName: 'SplitSquads',
-    title: 'SplitSquads - Rewards-Sharing Social Staking',
-    description: 'Join squads, stake $SPLIT tokens, and earn rewards based on your contribution and activity.',
+    url: 'https://split.game',
+    siteName: 'SPLIT',
+    title: 'SPLIT - SocialFi Staking Game',
+    description: 'The ultimate SocialFi staking game. Choose Split or Steal daily, build streaks, and compete with your squad.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'SplitSquads',
+        alt: 'SPLIT - SocialFi Staking Game',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SplitSquads - Rewards-Sharing Social Staking',
-    description: 'Join squads, stake $SPLIT tokens, and earn rewards based on your contribution and activity.',
+    title: 'SPLIT - SocialFi Staking Game',
+    description: 'The ultimate SocialFi staking game. Choose Split or Steal daily, build streaks, and compete with your squad.',
     images: ['/og-image.png'],
-    creator: '@splitsquads',
+    creator: '@splitgame',
   },
   robots: {
     index: true,
@@ -56,9 +66,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'your-google-verification-code',
-  },
 };
 
 export default function RootLayout({
@@ -68,50 +75,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            .wallet-adapter-button {
-              background-color: #4EF2C4 !important;
-              color: #0A0F14 !important;
-              border-radius: 0.5rem !important;
-              font-weight: 500 !important;
-              transition: all 0.2s !important;
-              border: none !important;
-            }
-            
-            .wallet-adapter-button:hover {
-              background-color: rgba(78, 242, 196, 0.9) !important;
-              transform: scale(1.05) !important;
-              box-shadow: 0 0 20px rgba(78, 242, 196, 0.3) !important;
-            }
-            
-            .wallet-adapter-button:active {
-              transform: scale(0.98) !important;
-            }
-            
-            .wallet-adapter-dropdown {
-              background-color: rgba(255, 255, 255, 0.08) !important;
-              backdrop-filter: blur(24px) !important;
-              border: 1px solid rgba(255, 255, 255, 0.15) !important;
-              border-radius: 0.75rem !important;
-            }
-            
-            .wallet-adapter-dropdown-list-item {
-              background-color: transparent !important;
-              color: white !important;
-            }
-            
-            .wallet-adapter-dropdown-list-item:hover {
-              background-color: rgba(255, 255, 255, 0.1) !important;
-            }
-          `
-        }} />
-      </head>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans`}>
         <QueryProvider>
           <WalletProvider>
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-screen flex flex-col bg-bg text-ink">
               <Header />
               <main className="flex-1">
                 {children}

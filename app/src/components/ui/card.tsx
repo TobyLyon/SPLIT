@@ -1,32 +1,48 @@
 import * as React from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    variant?: 'default' | 'glass' | 'glass-strong' | 'arcade';
-  }
->(({ className, variant = 'default', ...props }, ref) => {
-  const variantClasses = {
-    default: 'bg-card text-card-foreground',
-    glass: 'glass',
-    'glass-strong': 'glass-strong',
-    arcade: 'glass arcade-border',
-  };
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'glass' | 'glass-strong';
+  hover?: boolean;
+  glow?: boolean;
+}
 
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        'rounded-lg border shadow-sm',
-        variantClasses[variant],
-        'card-hover',
-        className
-      )}
-      {...props}
-    />
-  );
-});
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = 'glass', hover = false, glow = false, children, ...props }, ref) => {
+    const baseClasses = 'rounded-2xl border transition-all duration-200';
+    
+    const variantClasses = {
+      default: 'bg-card text-card-foreground border-border shadow-sm',
+      glass: 'bg-glass backdrop-blur-xl border-white/10 shadow-glass',
+      'glass-strong': 'bg-glass-strong backdrop-blur-xl border-white/20 shadow-glass',
+    };
+
+    const Component = hover ? motion.div : 'div';
+    const motionProps = hover ? {
+      whileHover: { scale: 1.02, y: -2 },
+      whileTap: { scale: 0.98 },
+      transition: { type: 'spring', stiffness: 400, damping: 25 }
+    } : {};
+
+    return (
+      <Component
+        className={cn(
+          baseClasses,
+          variantClasses[variant],
+          hover && 'cursor-pointer hover:shadow-lg',
+          glow && 'animate-glow',
+          className
+        )}
+        ref={ref}
+        {...motionProps}
+        {...props}
+      >
+        {children}
+      </Component>
+    );
+  }
+);
 Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<
@@ -48,7 +64,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
+      'text-2xl font-semibold leading-none tracking-tight text-ink',
       className
     )}
     {...props}
@@ -62,7 +78,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cn('text-sm text-ink-dim', className)}
     {...props}
   />
 ));

@@ -9,10 +9,8 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
-  BackpackWalletAdapter,
   LedgerWalletAdapter,
   NightlyWalletAdapter,
-  GlowWalletAdapter,
   TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
@@ -42,10 +40,8 @@ export function WalletProvider({ children }: WalletProviderProps) {
     () => [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter({ network }),
-      new BackpackWalletAdapter(),
       new LedgerWalletAdapter(),
       new NightlyWalletAdapter(),
-      new GlowWalletAdapter(),
       new TorusWalletAdapter(),
     ],
     [network]

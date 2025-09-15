@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Github, Twitter, Discord, ExternalLink } from 'lucide-react';
+import { Github, Twitter, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const footerLinks = {
@@ -19,7 +19,7 @@ const footerLinks = {
   ],
   community: [
     { name: 'Twitter', href: 'https://twitter.com/splitsquads', icon: Twitter },
-    { name: 'Discord', href: 'https://discord.gg/splitsquads', icon: Discord },
+    { name: 'Discord', href: 'https://discord.gg/splitsquads', icon: ExternalLink },
     { name: 'GitHub', href: 'https://github.com/splitsquads', icon: Github },
   ],
 };
@@ -33,8 +33,8 @@ export function Footer() {
             {/* Logo and description */}
             <div className="col-span-1 md:col-span-2">
               <Link href="/" className="flex items-center space-x-2 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-brand-mint to-brand-violet flex items-center justify-center">
-                  <span className="text-brand-dark font-bold text-sm">SS</span>
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-brand to-accent flex items-center justify-center">
+                  <span className="text-bg font-bold text-sm">SS</span>
                 </div>
                 <span className="text-xl font-bold text-gradient-dual">
                   SplitSquads
@@ -56,7 +56,7 @@ export function Footer() {
                       whileTap={{ scale: 0.95 }}
                       className="p-2 rounded-lg glass hover:bg-white/10 transition-colors"
                     >
-                      <Icon className="h-5 w-5 text-brand-mint" />
+                      <Icon className="h-5 w-5 text-brand" />
                     </motion.a>
                   );
                 })}
@@ -71,7 +71,7 @@ export function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-sm text-muted-foreground hover:text-brand-mint transition-colors"
+                      className="text-sm text-muted-foreground hover:text-brand transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -88,7 +88,7 @@ export function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-sm text-muted-foreground hover:text-brand-mint transition-colors flex items-center space-x-1"
+                      className="text-sm text-muted-foreground hover:text-brand transition-colors flex items-center space-x-1"
                     >
                       <span>{item.name}</span>
                       <ExternalLink className="h-3 w-3" />
@@ -108,13 +108,13 @@ export function Footer() {
               <div className="flex items-center space-x-6 mt-4 md:mt-0">
                 <Link
                   href="/privacy"
-                  className="text-sm text-muted-foreground hover:text-brand-mint transition-colors"
+                  className="text-sm text-muted-foreground hover:text-brand transition-colors"
                 >
                   Privacy Policy
                 </Link>
                 <Link
                   href="/terms"
-                  className="text-sm text-muted-foreground hover:text-brand-mint transition-colors"
+                  className="text-sm text-muted-foreground hover:text-brand transition-colors"
                 >
                   Terms of Service
                 </Link>

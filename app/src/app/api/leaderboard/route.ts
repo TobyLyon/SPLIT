@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('type', type);
     }
 
-    const { data, error, count } = await query;
+    const { data, error, count: _count } = await query;
 
     if (error) {
       return NextResponse.json(
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total count for pagination
-    const { count: totalCount, error: countError } = await supabase
+    const { count: totalCount, error: _countError } = await supabase
       .from('leaderboard')
       .select('*', { count: 'exact', head: true })
       .eq(type !== 'all' ? 'type' : 'id', type !== 'all' ? type : '');

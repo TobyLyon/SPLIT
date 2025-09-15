@@ -2,56 +2,82 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, Trophy, Users, Wallet } from 'lucide-react';
+import { Menu, X, Trophy, Users, Zap, User, Coins } from 'lucide-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
+import { PotMeter } from '@/components/game/pot-meter';
+import { AvatarRibbon } from '@/components/ui/avatar-ribbon';
+import { AnimatedAscii } from '@/components/ui/animated-ascii';
+import { HeaderPotWidget } from '@/components/ui/header-pot-widget';
+import { useCommunityPot, useCurrentProfile, useCurrentUserStats } from '@/hooks/useDatabase';
 import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Users },
+  { name: 'Game', href: '/', icon: Zap },
   { name: 'Squads', href: '/squads', icon: Users },
   { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
 ];
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { connected } = useWallet();
-  const router = useRouter();
+  const { connected, publicKey } = useWallet();
+  
+  // Data hooks
+  const { data: potTotal = 0 } = useCommunityPot();
+  const { data: profile } = useCurrentProfile();
+  const { data: userStats } = useCurrentUserStats();
+
+  const nextUnlockDate = new Date(Date.now() + 4 * 60 * 60 * 1000); // Mock: 4h from now
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 backdrop-blur-xl">
       <div className="glass-strong">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+        <div className="mx-auto max-w-7xl container-padding">
+          <div className="flex h-20 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-3">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-3"
               >
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-brand-mint to-brand-violet flex items-center justify-center">
-                  <span className="text-brand-dark font-bold text-sm">SS</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-20 flex items-center justify-center">
+                    <AnimatedAscii 
+                      size="sm" 
+                      glow 
+                      interval={4000}
+                      className="text-xl leading-none whitespace-nowrap"
+                    />
+                  </div>
+                  <span className="text-2xl font-bold text-gradient">
+                    SPLIT
+                  </span>
                 </div>
-                <span className="text-xl font-bold text-gradient-dual">
-                  SplitSquads
-                </span>
               </motion.div>
             </Link>
 
+            {/* Community Pot Inline (Desktop) */}
+            <div className="hidden lg:flex flex-1 justify-center max-w-md mx-8">
+              <HeaderPotWidget
+                current={potTotal || 125000}
+                target={200000}
+                nextUnlockAt={nextUnlockDate}
+              />
+            </div>
+
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <nav className="hidden md:flex items-center space-x-6">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center space-x-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center space-x-2 text-sm font-medium text-ink-dim hover:text-ink transition-colors hover-lift px-3 py-2 rounded-xl"
                   >
                     <Icon className="h-4 w-4" />
                     <span>{item.name}</span>
@@ -62,27 +88,39 @@ export function Header() {
 
             {/* Right side actions */}
             <div className="flex items-center space-x-4">
-              {/* Search button */}
-              <Button variant="ghost" size="icon" className="hidden sm:flex">
-                <Search className="h-4 w-4" />
-              </Button>
+              {/* Profile Avatar (when connected) */}
+              {connected && profile && (
+                <Link href={`/profile/${profile.handle || 'me'}`}>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <AvatarRibbon
+                      src={profile.avatar_url}
+                      handle={profile.handle}
+                      size="sm"
+                      streak={userStats?.current_streak || 0}
+                      winRate={userStats?.winrate || 0}
+                      showStats={false}
+                      animated={false}
+                    />
+                  </motion.div>
+                </Link>
+              )}
 
               {/* Wallet connection */}
               <div className="wallet-adapter-button-wrapper">
-                <WalletMultiButton className="!bg-brand-mint !text-brand-dark hover:!bg-brand-mint/90 !rounded-lg !font-medium !transition-all !duration-200 hover:!scale-105" />
+                <WalletMultiButton className="glass-button !text-ink hover:!bg-glass-strong" />
               </div>
 
               {/* Mobile menu button */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="md:hidden glass hover:bg-glass-strong"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? (
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 ) : (
-                  <Menu className="h-4 w-4" />
+                  <Menu className="h-5 w-5" />
                 )}
               </Button>
             </div>
@@ -97,73 +135,56 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-white/10"
+            className="md:hidden border-t border-white/10 bg-glass-strong backdrop-blur-xl"
           >
-            <Card variant="glass-strong" className="mx-4 mt-2 mb-4 rounded-lg">
-              <div className="p-4 space-y-2">
-                {navigation.map((item) => {
-                  const Icon = item.icon;
-                  return (
+            <div className="container-padding py-4 space-y-4">
+              {/* Mobile Community Pot */}
+              <div className="lg:hidden">
+                <PotMeter
+                  current={potTotal || 125000}
+                  target={200000}
+                  nextUnlockAt={nextUnlockDate}
+                  variant="compact"
+                  animated={false}
+                  showCountdown
+                />
+              </div>
+
+              {/* Mobile Navigation */}
+              <GlassCard className="p-4">
+                <div className="space-y-2">
+                  {navigation.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className="flex items-center space-x-3 p-3 rounded-xl hover:bg-glass transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Icon className="h-5 w-5 text-brand" />
+                        <span className="font-medium text-ink">{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                  
+                  {/* Mobile Profile Link */}
+                  {connected && profile && (
                     <Link
-                      key={item.name}
-                      href={item.href}
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/5 transition-colors"
+                      href={`/profile/${profile.handle || 'me'}`}
+                      className="flex items-center space-x-3 p-3 rounded-xl hover:bg-glass transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Icon className="h-5 w-5 text-brand-mint" />
-                      <span className="font-medium">{item.name}</span>
+                      <User className="h-5 w-5 text-brand" />
+                      <span className="font-medium text-ink">Profile</span>
                     </Link>
-                  );
-                })}
-                
-                {/* Mobile search */}
-                <button className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/5 transition-colors w-full text-left">
-                  <Search className="h-5 w-5 text-brand-mint" />
-                  <span className="font-medium">Search</span>
-                </button>
-              </div>
-            </Card>
+                  )}
+                </div>
+              </GlassCard>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
     </header>
   );
 }
-
-// Custom wallet button styles
-export const walletButtonStyles = `
-  .wallet-adapter-button {
-    background-color: #4EF2C4 !important;
-    color: #0A0F14 !important;
-    border-radius: 0.5rem !important;
-    font-weight: 500 !important;
-    transition: all 0.2s !important;
-    border: none !important;
-  }
-  
-  .wallet-adapter-button:hover {
-    background-color: rgba(78, 242, 196, 0.9) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 0 20px rgba(78, 242, 196, 0.3) !important;
-  }
-  
-  .wallet-adapter-button:active {
-    transform: scale(0.98) !important;
-  }
-  
-  .wallet-adapter-dropdown {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(24px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 0.75rem !important;
-  }
-  
-  .wallet-adapter-dropdown-list-item {
-    background-color: transparent !important;
-    color: white !important;
-  }
-  
-  .wallet-adapter-dropdown-list-item:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-  }
-`;

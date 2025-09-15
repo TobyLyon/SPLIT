@@ -1,280 +1,167 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Users, TrendingUp, Medal, Crown, Award } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { formatNumber, shortenAddress } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-
-// Real leaderboard data hook
-function useLeaderboard(type: 'squad' | 'member' | 'all' = 'all') {
-  return useQuery({
-    queryKey: ['leaderboard', type],
-    queryFn: async () => {
-      const response = await fetch(`/api/leaderboard?type=${type}&limit=50`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch leaderboard');
-      }
-      const data = await response.json();
-      return data.entries || [];
-    },
-    refetchInterval: 60000, // Refetch every minute
-    staleTime: 30000, // Consider stale after 30 seconds
-  });
-}
-
-type LeaderboardType = 'squads' | 'members';
+import { Trophy, Users, Crown, Coins, Sparkles, Medal, Flame } from 'lucide-react';
+import { GlassCard } from '@/components/ui/glass-card';
+import { CrewLeaderboard } from '@/components/crews/crew-leaderboard';
+import { KPI } from '@/components/ui/kpi';
+import { Pill } from '@/components/ui/pill';
+import { formatNumber } from '@/lib/utils';
+import { MOCK_CREWS } from '@/lib/crews';
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<LeaderboardType>('squads');
-  const [mounted, setMounted] = useState(false);
-  
-  // Real data hooks
-  const { data: leaderboardData = [], isLoading } = useLeaderboard(activeTab === 'squads' ? 'squad' : 'member');
+  const crews = MOCK_CREWS;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return <Crown className="h-5 w-5 text-yellow-500" />;
-      case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
-      case 3:
-        return <Award className="h-5 w-5 text-amber-600" />;
-      default:
-        return <span className="text-muted-foreground font-mono">#{rank}</span>;
-    }
-  };
-
-  const getRankBadgeVariant = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return 'arcade';
-      case 2:
-        return 'violet';
-      case 3:
-        return 'mint';
-      default:
-        return 'glass';
-    }
+  // Calculate crew stats for the hero section
+  const crewStats = {
+    totalCrews: crews.length,
+    totalMembers: crews.reduce((acc, crew) => acc + crew.stats.totalMembers, 0),
+    topRating: Math.max(...crews.map(crew => crew.stats.crewRating)),
+    totalEarnings: crews.reduce((acc, crew) => acc + crew.stats.totalEarnings, 0),
+    bestStreak: Math.max(...crews.map(crew => crew.stats.bestStreak)),
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-8"
-      >
-        <h1 className="text-4xl font-bold text-gradient-dual mb-4">
-          <Trophy className="inline-block mr-3 h-8 w-8" />
-          Leaderboard
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Compete with the best squads and members on SplitSquads. 
-          Rankings are updated in real-time based on total staked tokens and activity.
-        </p>
-      </motion.div>
-
-      {/* Tab Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex justify-center mb-8"
-      >
-        <Card variant="glass" className="p-1">
-          <div className="flex space-x-1">
-            <Button
-              variant={activeTab === 'squads' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('squads')}
-              className="px-6"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Top Squads
-            </Button>
-            <Button
-              variant={activeTab === 'members' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('members')}
-              className="px-6"
-            >
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Top Members
-            </Button>
-          </div>
-        </Card>
-      </motion.div>
-
-      {/* Leaderboard Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="max-w-4xl mx-auto"
-      >
-        <Card variant="glass-strong">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              {activeTab === 'squads' ? (
-                <>
-                  <Users className="h-5 w-5 text-brand-mint" />
-                  <span>Top Squads</span>
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="h-5 w-5 text-brand-violet" />
-                  <span>Top Members</span>
-                </>
-              )}
-            </CardTitle>
-            <CardDescription>
-              {activeTab === 'squads' 
-                ? 'Squads ranked by total staked tokens and member count'
-                : 'Individual members ranked by total staked tokens'
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading ? (
-              // Loading skeleton
-              [...Array(10)].map((_, i) => (
-                <Card key={i} variant="glass" className="p-6 animate-pulse">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
-                    <div className="flex-1">
-                      <div className="h-5 bg-white/10 rounded w-1/2 mb-2"></div>
-                      <div className="h-4 bg-white/10 rounded w-1/3"></div>
-                    </div>
-                    <div className="text-right">
-                      <div className="h-6 bg-white/10 rounded w-20 mb-1"></div>
-                      <div className="h-4 bg-white/10 rounded w-16"></div>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : leaderboardData.length > 0 ? (
-              leaderboardData.map((entry: any, index: number) => (
-                <motion.div
-                  key={entry.pubkey}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card 
-                    variant="glass" 
-                    className={`p-6 hover:scale-[1.01] transition-all duration-300 ${
-                      entry.rank <= 3 ? 'border-brand-mint/30' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {/* Rank */}
-                        <div className="flex items-center justify-center w-12 h-12 rounded-lg glass">
-                          {getRankIcon(entry.rank)}
-                        </div>
-
-                        {/* Info */}
-                        <div>
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="font-semibold text-lg">{entry.name}</h3>
-                            {entry.rank <= 3 && (
-                              <Badge variant={getRankBadgeVariant(entry.rank)}>
-                                {entry.rank === 1 ? '👑 Champion' : 
-                                 entry.rank === 2 ? '🥈 Runner-up' : 
-                                 '🥉 Third Place'}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                            <span>{shortenAddress(entry.pubkey)}</span>
-                            {activeTab === 'squads' && entry.member_count && (
-                              <span>{entry.member_count} members</span>
-                            )}
-                            {activeTab === 'members' && entry.twitter_handle && (
-                              <a 
-                                href={`https://twitter.com/${entry.twitter_handle.replace('@', '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-brand-mint hover:underline"
-                              >
-                                {entry.twitter_handle}
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="text-right">
-                        <div className="text-xl font-bold text-gradient-mint">
-                          {formatNumber(entry.total_staked / 1_000_000)} $SPLIT
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Rank #{entry.rank}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No {activeTab} found</p>
-                <p className="text-sm">Be the first to create a squad and start staking!</p>
-              </div>
-            )}
-
-            {/* Load More Button */}
-            <div className="text-center pt-4">
-              <Button variant="glass" size="lg">
-                Load More Results
-              </Button>
+    <div className="min-h-screen bg-bg">
+      {/* Hero Section */}
+      <section className="section-padding pt-32 pb-16">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-12"
+          >
+            <div className="flex items-center justify-center space-x-2 mb-6">
+              <Crown className="w-8 h-8 text-brand" />
+              <h1 className="text-4xl md:text-6xl font-bold text-gradient">
+                Crew Leaderboard
+              </h1>
+              <Crown className="w-8 h-8 text-accent" />
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            <p className="text-xl md:text-2xl text-ink-dim max-w-3xl mx-auto">
+              The most legendary crews in SPLIT. Form your gang, customize your identity, 
+              and dominate the leaderboard together.
+            </p>
+          </motion.div>
 
-      {/* Stats Summary */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 max-w-4xl mx-auto"
-      >
-        <Card variant="glass" className="text-center p-6">
-          <div className="text-2xl font-bold text-gradient-mint mb-2">
-            {formatNumber(1250000)}
-          </div>
-          <p className="text-sm text-muted-foreground">Total Staked</p>
-        </Card>
+          {/* Top Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
+          >
+            <GlassCard className="p-4 text-center" hover>
+              <KPI
+                value={crewStats.totalCrews}
+                label="Active Crews"
+                icon={Users}
+                variant="brand"
+                size="sm"
+                animated
+              />
+            </GlassCard>
+            <GlassCard className="p-4 text-center" hover>
+              <KPI
+                value={crewStats.totalMembers}
+                label="Total Members"
+                icon={Sparkles}
+                variant="accent"
+                size="sm"
+                animated
+              />
+            </GlassCard>
+            <GlassCard className="p-4 text-center" hover>
+              <KPI
+                value={crewStats.topRating}
+                label="Top Rating"
+                icon={Trophy}
+                variant="success"
+                size="sm"
+                animated
+              />
+            </GlassCard>
+            <GlassCard className="p-4 text-center" hover>
+              <KPI
+                value={`$${formatNumber(crewStats.totalEarnings)}`}
+                label="Total Earnings"
+                icon={Coins}
+                variant="warning"
+                size="sm"
+                animated
+              />
+            </GlassCard>
+          </motion.div>
+        </div>
+      </section>
 
-        <Card variant="glass" className="text-center p-6">
-          <div className="text-2xl font-bold text-gradient-violet mb-2">
-            {formatNumber(89500)}
-          </div>
-          <p className="text-sm text-muted-foreground">Rewards Distributed</p>
-        </Card>
+      {/* Crew Leaderboard Section */}
+      <section className="section-padding">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <CrewLeaderboard
+              crews={crews}
+              showSearch
+              showFilters
+              variant="default"
+            />
+          </motion.div>
+        </div>
+      </section>
 
-        <Card variant="glass" className="text-center p-6">
-          <div className="text-2xl font-bold text-gradient-mint mb-2">
-            {formatNumber(1847)}
-          </div>
-          <p className="text-sm text-muted-foreground">Active Members</p>
-        </Card>
-      </motion.div>
+      {/* Call to Action */}
+      <section className="section-padding">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <GlassCard className="p-8 text-center" glow>
+              <h3 className="text-3xl font-bold mb-4 text-gradient">
+                Ready to Form Your Crew?
+              </h3>
+              <p className="text-xl text-ink-dim mb-8 max-w-2xl mx-auto">
+                Join forces with other players, unlock exclusive customizations, and climb the ranks together. 
+                The strongest crews earn the biggest rewards.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8">
+                <Pill variant="brand" size="lg" glow>
+                  <Crown className="w-5 h-5 mr-2" />
+                  Custom Icons & Banners
+                </Pill>
+                <Pill variant="accent" size="lg">
+                  <Flame className="w-5 h-5 mr-2" />
+                  Burn for Multipliers
+                </Pill>
+                <Pill variant="success" size="lg">
+                  <Medal className="w-5 h-5 mr-2" />
+                  Exclusive Rewards
+                </Pill>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-ink-dim">
+                <div className="flex items-center justify-center space-x-2">
+                  <Users className="w-4 h-4 text-brand" />
+                  <span>Up to 50 Members</span>
+                </div>
+                <div className="flex items-center justify-center space-x-2">
+                  <Trophy className="w-4 h-4 text-accent" />
+                  <span>Rank Progression</span>
+                </div>
+                <div className="flex items-center justify-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-green-400" />
+                  <span>Legendary Unlocks</span>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 }

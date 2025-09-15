@@ -25,9 +25,25 @@ export default function CreateSquadPage() {
   const [formData, setFormData] = useState({
     name: '',
     maxMembers: UI_CONFIG.defaultSquadSize,
+    tags: [] as string[],
+    isPublic: true,
+    description: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Available tags for squad categorization
+  const availableTags = ['DeFi', 'Gaming', 'NFT', 'Trading', 'Social', 'Education', 'Development'];
+  
+  // Handle tag selection
+  const handleTagToggle = (tag: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags?.includes(tag) 
+        ? prev.tags.filter(t => t !== tag)
+        : [...(prev.tags || []), tag].slice(0, 5)
+    }));
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -131,7 +147,7 @@ export default function CreateSquadPage() {
         <Card variant="glass-strong">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Sparkles className="h-5 w-5 text-brand-mint" />
+              <Sparkles className="h-5 w-5 text-brand" />
               <span>Squad Details</span>
             </CardTitle>
             <CardDescription>
@@ -144,13 +160,13 @@ export default function CreateSquadPage() {
               {/* Squad Name */}
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center space-x-2">
-                  <Hash className="h-4 w-4 text-brand-mint" />
+                  <Hash className="h-4 w-4 text-brand" />
                   <span>Squad Name</span>
                 </label>
                 <input
                   type="text"
                   placeholder="Enter your squad name"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:border-brand-mint/50 text-foreground placeholder-muted-foreground"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 text-foreground placeholder-muted-foreground"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   maxLength={UI_CONFIG.maxSquadNameLength}
@@ -164,7 +180,7 @@ export default function CreateSquadPage() {
               {/* Max Members */}
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-brand-mint" />
+                  <Users className="h-4 w-4 text-brand" />
                   <span>Maximum Members</span>
                 </label>
                 <div className="flex items-center space-x-4">
@@ -172,7 +188,7 @@ export default function CreateSquadPage() {
                     type="range"
                     min="2"
                     max="8"
-                    className="flex-1 accent-brand-mint"
+                    className="flex-1 accent-brand"
                     value={formData.maxMembers}
                     onChange={(e) => setFormData(prev => ({ ...prev, maxMembers: parseInt(e.target.value) }))}
                   />
@@ -201,8 +217,8 @@ export default function CreateSquadPage() {
                       onClick={() => handleTagToggle(tag)}
                       className={`px-3 py-1 text-xs rounded-full border transition-all ${
                         formData.tags.includes(tag)
-                          ? 'bg-brand-mint text-brand-dark border-brand-mint'
-                          : 'bg-white/5 text-muted-foreground border-white/10 hover:border-brand-mint/50'
+                          ? 'bg-brand text-bg border-brand'
+                          : 'bg-white/5 text-muted-foreground border-white/10 hover:border-brand/50'
                       }`}
                       disabled={!formData.tags.includes(tag) && formData.tags.length >= 5}
                     >
@@ -221,7 +237,7 @@ export default function CreateSquadPage() {
                     onClick={() => setFormData(prev => ({ ...prev, isPublic: true }))}
                     className={`flex-1 p-3 rounded-lg border transition-all ${
                       formData.isPublic
-                        ? 'bg-brand-mint/10 border-brand-mint text-brand-mint'
+                        ? 'bg-brand/10 border-brand text-brand'
                         : 'bg-white/5 border-white/10 text-muted-foreground hover:border-white/20'
                     }`}
                   >
@@ -233,7 +249,7 @@ export default function CreateSquadPage() {
                     onClick={() => setFormData(prev => ({ ...prev, isPublic: false }))}
                     className={`flex-1 p-3 rounded-lg border transition-all ${
                       !formData.isPublic
-                        ? 'bg-brand-violet/10 border-brand-violet text-brand-violet'
+                        ? 'bg-accent/10 border-accent text-accent'
                         : 'bg-white/5 border-white/10 text-muted-foreground hover:border-white/20'
                     }`}
                   >

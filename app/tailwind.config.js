@@ -50,18 +50,54 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // SplitSquads brand colors
+        // Glassmorphic + Arcade brand colors
         brand: {
-          dark: '#0A0F14',
-          mint: '#4EF2C4',
-          violet: '#8A7CFF',
-          glass: 'rgba(255, 255, 255, 0.06)',
+          DEFAULT: '#34F5C5', // mint
+          50: '#F0FEFB',
+          100: '#CCFEF0', 
+          200: '#9AFCE1',
+          300: '#5FF6CF',
+          400: '#34F5C5',
+          500: '#1BE0B0',
+          600: '#0FC49B',
+          700: '#0A9D7E',
+          800: '#087A62',
+          900: '#0B1B1A',
         },
+        accent: {
+          DEFAULT: '#9B5CFF', // violet
+          50: '#F7F3FF',
+          100: '#EDE4FF',
+          200: '#DDD0FF',
+          300: '#C4B0FF',
+          400: '#A584FF',
+          500: '#9B5CFF',
+          600: '#8B3EF7',
+          700: '#7B2BE3',
+          800: '#6623BF',
+          900: '#1A1130',
+        },
+        ink: {
+          DEFAULT: '#EAF7F5',
+          dim: '#9FB7B2',
+          darker: '#5C6E6B',
+        },
+        bg: '#060A0A',
+        glass: 'rgba(255, 255, 255, 0.08)',
+        'glass-strong': 'rgba(255, 255, 255, 0.12)',
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        '2xl': '1rem', // Default for cards/buttons
+        '3xl': '1.5rem',
+      },
+      boxShadow: {
+        'glass': '0 10px 30px rgba(0, 0, 0, 0.35)',
+        'glass-sm': '0 4px 12px rgba(0, 0, 0, 0.25)',
+        'brand-glow': '0 0 20px rgba(52, 245, 197, 0.3)',
+        'accent-glow': '0 0 20px rgba(155, 92, 255, 0.3)',
       },
       keyframes: {
         'accordion-down': {
@@ -81,8 +117,12 @@ module.exports = {
           '100%': { transform: 'translateX(0)' },
         },
         'glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(78, 242, 196, 0.3)' },
-          '50%': { boxShadow: '0 0 30px rgba(78, 242, 196, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(52, 245, 197, 0.3)' },
+          '50%': { boxShadow: '0 0 30px rgba(52, 245, 197, 0.6)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { boxShadow: '0 0 15px rgba(155, 92, 255, 0.2)' },
+          '50%': { boxShadow: '0 0 25px rgba(155, 92, 255, 0.4)' },
         },
       },
       animation: {
@@ -91,6 +131,7 @@ module.exports = {
         'fade-in': 'fade-in 0.5s ease-out',
         'slide-in': 'slide-in 0.3s ease-out',
         'glow': 'glow 2s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
       },
       backdropBlur: {
         'glass': '18px',

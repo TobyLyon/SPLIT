@@ -10,7 +10,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, variant = 'default', ...props }, ref) => {
     const variantClasses = {
       default: 'bg-background border-input',
-      glass: 'bg-white/5 border-white/10 focus:border-brand-mint/50',
+      glass: 'bg-white/5 border-white/10 focus:border-brand/50',
     };
 
     return (

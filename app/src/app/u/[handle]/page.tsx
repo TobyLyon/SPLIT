@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 import { 
   ArrowLeft, Twitter, ExternalLink, Users, TrendingUp, 
   Trophy, Copy, Settings, Shield 
@@ -128,8 +129,8 @@ export default function UserProfilePage() {
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-brand-mint to-brand-violet flex items-center justify-center">
-                <span className="text-brand-dark font-bold text-2xl">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-brand to-accent flex items-center justify-center">
+                <span className="text-bg font-bold text-2xl">
                   {userProfile?.twitter_handle 
                     ? userProfile.twitter_handle.slice(1, 3).toUpperCase()
                     : shortenAddress(walletAddress).slice(0, 2).toUpperCase()
@@ -160,7 +161,7 @@ export default function UserProfilePage() {
               <div className="flex items-center space-x-2 mb-4">
                 <button
                   onClick={handleCopyAddress}
-                  className="flex items-center space-x-1 text-sm text-muted-foreground hover:text-brand-mint transition-colors"
+                  className="flex items-center space-x-1 text-sm text-muted-foreground hover:text-brand transition-colors"
                 >
                   <span className="font-mono">{shortenAddress(walletAddress)}</span>
                   <Copy className="h-3 w-3" />
@@ -260,7 +261,7 @@ export default function UserProfilePage() {
         <Card variant="glass-strong">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-brand-mint" />
+              <Users className="h-5 w-5 text-brand" />
               <span>{isOwnProfile ? 'My Squads' : 'Squads'}</span>
             </CardTitle>
             <CardDescription>

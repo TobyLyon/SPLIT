@@ -142,9 +142,9 @@ export function StakingModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {action === 'stake' ? (
-                    <Plus className="h-5 w-5 text-brand-mint" />
+                    <Plus className="h-5 w-5 text-brand" />
                   ) : (
-                    <Minus className="h-5 w-5 text-brand-violet" />
+                    <Minus className="h-5 w-5 text-accent" />
                   )}
                   <CardTitle>
                     {action === 'stake' ? 'Stake Tokens' : 'Unstake Tokens'}
@@ -167,7 +167,7 @@ export function StakingModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 rounded-lg glass">
                   <p className="text-sm text-muted-foreground">Current Stake</p>
-                  <p className="font-mono text-lg text-brand-mint">
+                  <p className="font-mono text-lg text-brand">
                     {formatNumber(currentStake)} $SPLIT
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export function StakingModal({
                   <p className="text-sm text-muted-foreground">
                     {action === 'stake' ? 'Available' : 'Max Unstake'}
                   </p>
-                  <p className="font-mono text-lg text-brand-violet">
+                  <p className="font-mono text-lg text-accent">
                     {action === 'stake' 
                       ? formatNumber(balance?.split || 0)
                       : formatNumber(currentStake)
@@ -191,7 +191,7 @@ export function StakingModal({
                   <input
                     type="number"
                     placeholder="0.00"
-                    className="w-full px-4 py-3 pr-16 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:border-brand-mint/50 text-foreground placeholder-muted-foreground font-mono text-lg"
+                    className="w-full px-4 py-3 pr-16 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 text-foreground placeholder-muted-foreground font-mono text-lg"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     min="0"
@@ -231,7 +231,7 @@ export function StakingModal({
               {numericAmount > 0 && !error && (
                 <Card variant="glass" className="p-4">
                   <div className="flex items-center space-x-2 mb-3">
-                    <TrendingUp className="h-4 w-4 text-brand-mint" />
+                    <TrendingUp className="h-4 w-4 text-brand" />
                     <span className="font-medium">Transaction Preview</span>
                   </div>
                   
@@ -240,7 +240,7 @@ export function StakingModal({
                       <span className="text-muted-foreground">
                         {action === 'stake' ? 'New Total Stake' : 'Remaining Stake'}
                       </span>
-                      <span className="font-mono text-brand-mint">
+                      <span className="font-mono text-brand">
                         {formatNumber(
                           action === 'stake' 
                             ? currentStake + numericAmount 
@@ -251,7 +251,7 @@ export function StakingModal({
                     
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Estimated Weight</span>
-                      <span className="font-mono text-brand-violet">
+                      <span className="font-mono text-accent">
                         {formatNumber(calculateNewWeight())}
                       </span>
                     </div>

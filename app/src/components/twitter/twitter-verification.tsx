@@ -185,9 +185,9 @@ export function TwitterVerification({ isOpen, onClose, onVerified }: TwitterVeri
                   <div key={stepItem.key} className="flex items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                       step === stepItem.key 
-                        ? 'bg-brand-mint text-brand-dark' 
+                        ? 'bg-brand text-bg' 
                         : index < ['generate', 'tweet', 'verify', 'success'].indexOf(step)
-                        ? 'bg-brand-mint/20 text-brand-mint'
+                        ? 'bg-brand/20 text-brand'
                         : 'bg-white/10 text-muted-foreground'
                     }`}>
                       {stepItem.icon}
@@ -195,7 +195,7 @@ export function TwitterVerification({ isOpen, onClose, onVerified }: TwitterVeri
                     {index < 3 && (
                       <div className={`w-12 h-0.5 mx-2 ${
                         index < ['generate', 'tweet', 'verify', 'success'].indexOf(step)
-                          ? 'bg-brand-mint'
+                          ? 'bg-brand'
                           : 'bg-white/10'
                       }`} />
                     )}
@@ -222,7 +222,7 @@ export function TwitterVerification({ isOpen, onClose, onVerified }: TwitterVeri
                       <div className="p-3 rounded-lg glass mb-4">
                         <p className="text-sm">
                           <span className="text-muted-foreground">Wallet:</span>{' '}
-                          <span className="font-mono text-brand-mint">
+                          <span className="font-mono text-brand">
                             {publicKey ? shortenAddress(publicKey.toString()) : 'Not connected'}
                           </span>
                         </p>
@@ -318,7 +318,7 @@ export function TwitterVerification({ isOpen, onClose, onVerified }: TwitterVeri
                       <input
                         type="url"
                         placeholder="https://twitter.com/username/status/..."
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-mint/50 focus:border-brand-mint/50 text-foreground placeholder-muted-foreground"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 text-foreground placeholder-muted-foreground"
                         value={tweetUrl}
                         onChange={(e) => setTweetUrl(e.target.value)}
                       />

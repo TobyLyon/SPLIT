@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
-import { generateNonce, validateTwitterHandle } from '@/lib/utils';
+import { generateNonce } from '@/lib/utils';
 
 const createProofSchema = z.object({
   walletAddress: z.string().min(32).max(44),
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Store the proof attempt
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('twitter_proofs')
       .insert({
         wallet_address: walletAddress,
@@ -182,7 +182,7 @@ async function verifyTweetContent(
     const profileUrl = `https://twitter.com/${username}`;
 
     // Simulate tweet content check
-    const expectedContent = `Verifying my wallet ${walletAddress} on @SplitSquads with nonce: ${nonce}`;
+    const _expectedContent = `Verifying my wallet ${walletAddress} on @SplitSquads with nonce: ${nonce}`;
     
     // Mock verification - in reality you'd check the actual tweet content
     return {

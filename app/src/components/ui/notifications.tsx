@@ -56,7 +56,7 @@ export function NotificationContainer() {
                         href={getExplorerUrl(notification.txHash)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1 text-xs text-brand-mint hover:text-brand-mint/80 mt-2"
+                        className="inline-flex items-center space-x-1 text-xs text-brand hover:text-brand/80 mt-2"
                       >
                         <span>View Transaction</span>
                         <ExternalLink className="h-3 w-3" />

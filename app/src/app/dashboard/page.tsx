@@ -9,16 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { formatNumber, formatTokenAmount, shortenAddress, calculateTimeAgo } from '@/lib/utils';
-import { useSquadsByAuthority, useSquadMembers } from '@/hooks/useBlockchain';
+import { formatNumber, shortenAddress } from '@/lib/utils';
+import { useSquadsByAuthority } from '@/hooks/useBlockchain';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 
 // Real user stats calculation
 function useUserStats(publicKey: any) {
   const { data: userSquads = [] } = useSquadsByAuthority(publicKey);
-  const { data: balance } = useWalletBalance();
+  const { data: _balance } = useWalletBalance();
   
-  const totalStaked = userSquads.reduce((sum, squad) => {
+  const totalStaked = userSquads.reduce((sum, _squad) => {
     // This would need to be calculated from member data
     return sum + 0; // TODO: Get actual user stake from member accounts
   }, 0);
@@ -38,6 +38,26 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const userStats = useUserStats(publicKey);
   const { data: balance } = useWalletBalance();
+  
+  // Mock recent activity data
+  const recentActivity = [
+    {
+      type: 'reward',
+      description: 'Squad reward distributed',
+      amount: '125 $SPLIT',
+      timestamp: '2 hours ago',
+      squad: 'Alpha Squad',
+      time: '2 hours ago'
+    },
+    {
+      type: 'stake',
+      description: 'Staked tokens to Alpha Squad',
+      amount: '1,000 $SPLIT',
+      timestamp: '1 day ago',
+      squad: 'Alpha Squad',
+      time: '1 day ago'
+    }
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -152,7 +172,7 @@ export default function DashboardPage() {
           <Card variant="glass-strong">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-brand-mint" />
+                <Users className="h-5 w-5 text-brand" />
                 <span>My Squads</span>
               </CardTitle>
               <CardDescription>
@@ -160,32 +180,32 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {userSquads.map((squad) => (
-                <Card key={squad.id} variant="glass" className="p-4 hover:scale-[1.01] transition-transform cursor-pointer">
+              {userStats.squads.map((squad) => (
+                <Card key={squad.pubkey.toString()} variant="glass" className="p-4 hover:scale-[1.01] transition-transform cursor-pointer">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="font-semibold text-lg">{squad.name}</h3>
+                      <h3 className="font-semibold text-lg">{squad.data.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {squad.memberCount}/{squad.maxMembers} members • Rank #{squad.rank}
+                        {squad.data.memberCount}/{squad.data.maxMembers} members
                       </p>
                     </div>
                     <Badge variant="arcade">
-                      +{squad.recentRewards} $SPLIT
+                      +0 $SPLIT
                     </Badge>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Your Stake</span>
-                      <span className="font-mono">{formatNumber(squad.userStake)} $SPLIT</span>
+                      <span className="font-mono">{formatNumber(0)} $SPLIT</span>
                     </div>
                     <Progress 
-                      value={(squad.userStake / squad.totalStaked) * 100} 
+                      value={0} 
                       variant="gradient"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Squad Total: {formatNumber(squad.totalStaked)} $SPLIT</span>
-                      <span>{((squad.userStake / squad.totalStaked) * 100).toFixed(1)}% share</span>
+                      <span>Squad Total: {formatNumber(squad.data.totalStaked.toNumber())} $SPLIT</span>
+                      <span>0% share</span>
                     </div>
                   </div>
                 </Card>
@@ -212,7 +232,7 @@ export default function DashboardPage() {
           <Card variant="glass-strong">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-brand-violet" />
+                <Activity className="h-5 w-5 text-accent" />
                 <span>Recent Activity</span>
               </CardTitle>
             </CardHeader>
@@ -220,8 +240,8 @@ export default function DashboardPage() {
               {recentActivity.map((activity, index) => (
                 <div key={index} className="flex items-center space-x-3 p-3 rounded-lg glass">
                   <div className={`w-2 h-2 rounded-full ${
-                    activity.type === 'reward' ? 'bg-brand-mint' :
-                    activity.type === 'stake' ? 'bg-brand-violet' :
+                    activity.type === 'reward' ? 'bg-brand' :
+                    activity.type === 'stake' ? 'bg-accent' :
                     'bg-yellow-500'
                   }`} />
                   <div className="flex-1">
